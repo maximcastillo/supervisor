@@ -1,19 +1,27 @@
 FROM        ubuntu:14.04
-MAINTAINER  Dicotraining info@dicotraining.com
+MAINTAINER  Dicotraining maximo.a.c.g@outlook.com
  
 
 # Update the package repository
-RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get update -y && apt-get upgrade -yqq
 
 
-# Install base system
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget curl 
-
- 
 # Install PHP 5.5
-RUN apt-get update; apt-get install -y php5-cli php5 php5-mcrypt php5-curl php5-pgsql
- 
+RUN apt-get install -y php5-cli php5 php5-mcrypt php5-curl php-pgsql
+# Install openssh
+RUN apt-get install -y openssh-server supervisor
+RUN mkdir -p /var/run/sshd
 
+# Add the student user with su permission
+RUN useradd -d /home/student -m -s /bin/bash student
+RUN echo student:student | chpasswd
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# Configuration of supervisor
+RUN mkdir -p /var/log/supervisor
+COPY ./supervisord.conf /etc/supervisor/supervisor.conf
+
+# Configure apache
 ADD ./config/001-docker.conf /etc/apache2/sites-available/
 RUN ln -s /etc/apache2/sites-available/001-docker.conf /etc/apache2/sites-enabled/
 
